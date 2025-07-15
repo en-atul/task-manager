@@ -1,0 +1,22 @@
+services:
+  db:
+    container_name: task-manager-jpa-postgres
+    image: postgres
+    environment:
+      POSTGRES_USER: task-manager
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: task-manager
+    ports:
+      - "5335:5432"
+    restart: unless-stopped
+    volumes:
+      - db:/data/postgres
+    networks:
+      - task-manager
+
+networks:
+  task-manager:
+    driver: bridge
+
+volumes:
+  db:
