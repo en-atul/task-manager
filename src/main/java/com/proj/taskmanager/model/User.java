@@ -7,8 +7,10 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.NaturalId;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 
 @Getter
 @Setter
@@ -33,6 +35,7 @@ public class User {
     private String lastName;
 
     @NaturalId
+    @Column(unique = true, nullable = false)
     private String email;
 
     private String password;

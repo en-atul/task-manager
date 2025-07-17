@@ -1,5 +1,6 @@
 package com.proj.taskmanager.model;
 
+import com.proj.taskmanager.enums.UserRole;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -12,15 +13,18 @@ import java.util.HashSet;
 @Getter
 @Setter
 @NoArgsConstructor
+@Table(name = "roles")
 public class Role {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private  Long id;
-    private String name;
 
-//    public Role(String name) {
-//        this.name = name;
-//    }
+    @Enumerated(EnumType.STRING)
+    private UserRole name;
+
+    public Role(UserRole name) {
+        this.name = name;
+    }
 
     @ManyToMany(mappedBy = "roles")
     private Collection<User> users = new HashSet<>();

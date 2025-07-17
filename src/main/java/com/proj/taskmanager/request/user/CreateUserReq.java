@@ -1,6 +1,6 @@
 package com.proj.taskmanager.request.user;
 
-import com.proj.taskmanager.enums.UserRoles;
+import com.proj.taskmanager.enums.UserRole;
 import com.proj.taskmanager.validation.user.AccountExists;
 import jakarta.validation.constraints.*;
 
@@ -12,5 +12,5 @@ public record CreateUserReq(@NotEmpty String firstName,
                                     message = "Password must be at least 8 characters long and include uppercase, lowercase, number, and special character."
                             )
                             String password,
-                         @NotNull UserRoles role) {
+                         @NotNull UserRole role) {
 }
