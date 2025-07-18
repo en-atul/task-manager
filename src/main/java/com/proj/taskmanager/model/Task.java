@@ -3,10 +3,18 @@ package com.proj.taskmanager.model;
 
 import com.proj.taskmanager.enums.TaskStatus;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
 @Entity
 @Table(name = "tasks")
 public class Task {
@@ -27,6 +35,9 @@ public class Task {
 
     @ManyToOne
     private User createdBy;
+
+    @ManyToOne
+    private User assignee;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
