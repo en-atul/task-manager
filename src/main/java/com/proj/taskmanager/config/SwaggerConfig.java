@@ -12,7 +12,7 @@ public class SwaggerConfig {
     public OpenAPI customOpenAPI() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("Tak Manager API")
+                        .title("Task Manager API")
                         .version("1.0")
                         .description("REST API documentation for Task Manager application"));
     }

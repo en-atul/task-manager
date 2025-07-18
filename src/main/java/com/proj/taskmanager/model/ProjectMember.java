@@ -2,7 +2,15 @@ package com.proj.taskmanager.model;
 
 import com.proj.taskmanager.enums.ProjectRole;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
 @Entity
 @Table(name = "project_members")
 public class ProjectMember {

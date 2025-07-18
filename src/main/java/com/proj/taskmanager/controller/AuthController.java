@@ -12,9 +12,12 @@ import com.proj.taskmanager.security.JwtUtil;
 import com.proj.taskmanager.security.UserDetailsImpl;
 import com.proj.taskmanager.service.token.TokenService;
 import com.proj.taskmanager.service.user.IUserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -29,24 +32,30 @@ import static org.springframework.http.HttpStatus.CONFLICT;
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("${api.prefix}/auth")
+@Tag(name = "Auth Controller", description = "APIs related to Authentication")
 public class AuthController {
     private final IUserService userService;
     private final AuthenticationManager authManager;
     private final JwtUtil jwtUtil;
     private final TokenService tokenService;
 
+    private final int access_token_expires_in = 1800; // 30 minutes in seconds
+    private final int refresh_token_expires_in = 604800; // 7 days in seconds
+
     @PostMapping("/register")
+    @Operation(summary = "Register new user", description = "Creates a new user account with the provided details")
     public ResponseEntity<ApiResponse> createUser(@Valid @RequestBody CreateUserReq request) {
         try {
             User user = userService.createUser(request);
             UserDto userDto = userService.convertUserToDto(user);
-            return ResponseEntity.ok(new ApiResponse("Register Success!", userDto));
+            return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse("Register Success!", userDto));
         } catch (RuntimeException e) {
             return ResponseEntity.status(CONFLICT).body(new ApiResponse(e.getMessage(), null));
         }
     }
 
     @PostMapping("/login")
+    @Operation(summary = "User login", description = "Authenticates user credentials and returns access and refresh tokens")
     public ResponseEntity<ApiResponse> login(@Valid @RequestBody LoginReq request, HttpServletRequest httpRequest) {
         try {
             Authentication auth = authManager.authenticate(
@@ -80,21 +89,22 @@ public class AuthController {
                 accessToken,
                 refreshToken,
                 "Bearer",
-                1800, // 30 minutes in seconds
-                604800 // 7 days in seconds
+                    access_token_expires_in,
+                refresh_token_expires_in
             );
             
             return ResponseEntity.ok(new ApiResponse("Login Success!", tokenResponse));
         } catch (org.springframework.security.authentication.BadCredentialsException e) {
-            return ResponseEntity.status(401).body(new ApiResponse("Bad credentials", null));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse("Bad credentials", null));
         } catch (org.springframework.security.core.userdetails.UsernameNotFoundException e) {
-            return ResponseEntity.status(401).body(new ApiResponse("User not found", null));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse("User not found", null));
         } catch (Exception e) {
-            return ResponseEntity.status(500).body(new ApiResponse("Authentication failed: " + e.getMessage(), null));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse("Authentication failed: " + e.getMessage(), null));
         }
     }
 
     @PostMapping("/logout")
+    @Operation(summary = "User logout", description = "Revokes the current user session and invalidates the access token")
     public ResponseEntity<ApiResponse> logout(@RequestHeader("Authorization") String authHeader) {
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
@@ -114,6 +124,7 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
+    @Operation(summary = "Refresh access token", description = "Generates a new access token using a valid refresh token")
     public ResponseEntity<ApiResponse> refreshToken(@Valid @RequestBody RefreshTokenReq request) {
         try {
             if (!jwtUtil.validateToken(request.refreshToken())) {
@@ -138,24 +149,25 @@ public class AuthController {
                 newAccessToken,
                 request.refreshToken(),
                 "Bearer",
-                1800, // 30 minutes in seconds
-                604800 // 7 days in seconds
+                    access_token_expires_in,
+                    refresh_token_expires_in
             );
             
             return ResponseEntity.ok(new ApiResponse("Token refreshed successfully", tokenResponse));
         } catch (Exception e) {
-            return ResponseEntity.status(401).body(new ApiResponse("Failed to refresh token", null));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse("Failed to refresh token", null));
         }
     }
 
     @GetMapping("/me")
+    @Operation(summary = "Get current user", description = "Retrieves the current authenticated user's profile information")
     public ResponseEntity<ApiResponse> getCurrentUser(@RequestHeader("Authorization") String authHeader) {
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
             
             try {
                 if (!jwtUtil.validateToken(token)) {
-                    return ResponseEntity.status(401).body(new ApiResponse("Invalid or expired token", null));
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse("Invalid or expired token", null));
                 }
                 
                 Long userId = jwtUtil.extractUserId(token);
@@ -165,20 +177,21 @@ public class AuthController {
                 
                 return ResponseEntity.ok(new ApiResponse("User details retrieved successfully", userDto));
             } catch (Exception e) {
-                return ResponseEntity.status(401).body(new ApiResponse("Invalid token", null));
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse("Invalid token", null));
             }
         }
-        return ResponseEntity.status(401).body(new ApiResponse("No token provided", null));
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse("No token provided", null));
     }
     
     @GetMapping("/sessions")
+    @Operation(summary = "Get user sessions", description = "Retrieves all active sessions for the current user")
     public ResponseEntity<ApiResponse> getUserSessions(@RequestHeader("Authorization") String authHeader) {
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
             
             try {
                 if (!jwtUtil.validateToken(token)) {
-                    return ResponseEntity.status(401).body(new ApiResponse("Invalid or expired token", null));
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse("Invalid or expired token", null));
                 }
                 
                 Long userId = jwtUtil.extractUserId(token);
@@ -186,10 +199,10 @@ public class AuthController {
                 
                 return ResponseEntity.ok(new ApiResponse("User sessions retrieved successfully", sessions));
             } catch (Exception e) {
-                return ResponseEntity.status(401).body(new ApiResponse("Invalid token", null));
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse("Invalid token", null));
             }
         }
-        return ResponseEntity.status(401).body(new ApiResponse("No token provided", null));
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse("No token provided", null));
     }
     
     // Helper methods
