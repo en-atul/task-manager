@@ -100,6 +100,8 @@ http://localhost:3001/api/v1
 
 ### Authentication Endpoints
 
+> Check the [Swagger UI](http://localhost:3001/swagger-ui.html) for API documentation
+
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | POST | `/auth/register` | Register a new user |
@@ -314,11 +316,5 @@ Feel free to explore the codebase to learn from the implementation!
 
 
 
-## 🆘 Support
-
-For support and questions:
-- Create an issue in the repository
-- Check the [Swagger UI](http://localhost:3001/swagger-ui.html) for API documentation
-- Review the application logs for debugging information
 
  
