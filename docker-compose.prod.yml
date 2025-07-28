@@ -1,34 +1,37 @@
 services:
-  task-service:
-      container_name: task
+  app:
+      container_name: taskmanager_app
       build:
         context: .
         dockerfile: Dockerfile
       environment:
         SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/task-manager
-        SPRING_DATASOURCE_USERNAME: task-manager
-        SPRING_DATASOURCE_PASSWORD: password
+        SPRING_DATASOURCE_USERNAME: tm_user
+        SPRING_DATASOURCE_PASSWORD: tm_password
       ports:
-        - "3001:3001"
+        - "8080:8080"
       networks:
-        - task-manager
+        - tm_network
+      depends_on:
+        - db
+
   db:
-    container_name: task-manager-jpa-postgres
+    container_name: taskmanager_db
     image: postgres
     environment:
-      POSTGRES_USER: task-manager
-      POSTGRES_PASSWORD: password
+      POSTGRES_USER: tm_user
+      POSTGRES_PASSWORD: tm_password
       POSTGRES_DB: task-manager
     ports:
-      - "5335:5432"
+      - "5432:5432"
     restart: unless-stopped
     volumes:
       - db:/data/postgres
     networks:
-      - task-manager
+      - tm_network
 
 networks:
-  task-manager:
+  tm_network:
     driver: bridge
 
 volumes:
