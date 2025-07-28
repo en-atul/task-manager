@@ -2,7 +2,7 @@ version: 0.2
 
 env:
   variables:
-    REPOSITORY_URI: 917147579356.dkr.ecr.eu-north-1.amazonaws.com/task-manager
+    # REPOSITORY_URI: xxxxxxxxxxxxx.dkr.ecr.eu-north-1.amazonaws.com/task-manager <--- Add in code-build environment section under environment variables
     CONTAINER_NAME: task-manager
     PUBLISH_TO_ECR: "false"
 
