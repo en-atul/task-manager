@@ -2,7 +2,7 @@ version: 0.2
 
 env:
   variables:
-    REPOSITORY_URI: 917147579356.dkr.ecr.eu-north-1.amazonaws.com/learn/task-manager
+    REPOSITORY_URI: 917147579356.dkr.ecr.eu-north-1.amazonaws.com/task-manager
     CONTAINER_NAME: taskmanager_app
     PUBLISH_TO_ECR: "false"
 
