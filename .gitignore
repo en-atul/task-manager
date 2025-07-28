@@ -34,3 +34,6 @@ build/
 
 ### DOCS ###
 docs/
+
+### Docker ###
+docker-compose.prod.local.yml

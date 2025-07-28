@@ -11,12 +11,6 @@ services:
     restart: unless-stopped
     volumes:
       - db:/data/postgres
-    networks:
-      - task-manager
-
-networks:
-  task-manager:
-    driver: bridge
 
 volumes:
   db:
