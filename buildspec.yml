@@ -3,7 +3,8 @@ version: 0.2
 env:
   variables:
     REPOSITORY_URI: 917147579356.dkr.ecr.eu-north-1.amazonaws.com/learn/task-manager
-    CONTAINER_NAME: taskmanager_app  # Must match ECS task definition
+    CONTAINER_NAME: taskmanager_app
+    PUBLISH_TO_ECR: "false"  # Can be overridden manually in UI
 
 phases:
   pre_build:
@@ -12,28 +13,38 @@ phases:
       - aws --version
       - echo Getting ECR login password...
       - aws ecr get-login-password --region eu-north-1 | docker login --username AWS --password-stdin $REPOSITORY_URI
-      - echo Getting Git commit hash and build ID...
-      - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
-      - IMAGE_TAG=build-$(echo $CODEBUILD_BUILD_ID | awk -F":" '{print $2}')
-      - echo COMMIT_HASH=$COMMIT_HASH, IMAGE_TAG=$IMAGE_TAG
 
-  build:
-    commands:
-      - echo Build started on `date`
-      - echo Building Docker image...
-      - docker build -t $REPOSITORY_URI:latest .
-      - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
+      # Determine branch name
+      - BRANCH_NAME=$(echo $CODEBUILD_WEBHOOK_HEAD_REF | sed 's|refs/heads/||')
+      - echo "Branch detected: $BRANCH_NAME"
+      - export COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+      - export IMAGE_TAG=build-$(echo $CODEBUILD_BUILD_ID | awk -F":" '{print $2}')
 
-  post_build:
-    commands:
-      - echo Build completed on `date`
-      - echo Pushing Docker images to ECR...
-      - docker push $REPOSITORY_URI:latest
-      - docker push $REPOSITORY_URI:$IMAGE_TAG
-      - echo Creating imagedefinitions.json...
-      - printf '[{"name":"%s","imageUri":"%s"}]' "$CONTAINER_NAME" "$REPOSITORY_URI:$IMAGE_TAG" > imagedefinitions.json
-      - echo --- imagedefinitions.json ---
-      - cat imagedefinitions.json
+      # Check if we should publish
+      - |
+        if [[ "$BRANCH_NAME" != "main" && "$PUBLISH_TO_ECR" != "true" ]]; then
+          echo "🛑 Skipping Docker build and push (Not on main and PUBLISH_TO_ECR != true)"
+          echo "[]" > imagedefinitions.json
+          exit 0
+        fi
+
+build:
+  commands:
+    - echo ✅ Build started on `date`
+    - echo Building Docker image...
+    - docker build -t $REPOSITORY_URI:latest .
+    - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
+
+post_build:
+  commands:
+    - echo ✅ Build completed on `date`
+    - echo Pushing Docker images to ECR...
+    - docker push $REPOSITORY_URI:latest
+    - docker push $REPOSITORY_URI:$IMAGE_TAG
+    - echo Creating imagedefinitions.json...
+    - printf '[{"name":"%s","imageUri":"%s"}]' "$CONTAINER_NAME" "$REPOSITORY_URI:$IMAGE_TAG" > imagedefinitions.json
+    - echo --- imagedefinitions.json ---
+    - cat imagedefinitions.json
 
 artifacts:
   files:
