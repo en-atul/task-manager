@@ -37,3 +37,5 @@ docs/
 
 ### Docker ###
 docker-compose.prod.local.yml
+k8s-deployment.yml
+k8s-service.yml

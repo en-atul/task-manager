@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: taskmanager-deployment
+spec:
+  selector:
+    matchLabels:
+      app: taskmanager-k8s
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: taskmanager-k8s
+    spec:
+      containers:
+        - name: taskmanager-app
+          image: taskmanager-app:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env: 
+            - name: DB_HOST  
+              valueFrom :
+                configMapKeyRef :
+                  name : db-config
+                  key :  db_host
+
+            - name: DB_NAME 
+              valueFrom :
+                configMapKeyRef :
+                  name : db-config
+                  key :  db_name
+                  
+            - name: DB_SSL_MODE 
+              valueFrom :
+                configMapKeyRef :
+                  name : db-config
+                  key :  db_ssl_mode
+
+            - name: DB_CHANNEL_BINDING 
+              valueFrom :
+                configMapKeyRef :
+                  name : db-config
+                  key :  db_channel_binding                  
+
+            - name: SPRING_DATASOURCE_USERNAME  
+              valueFrom :
+                secretKeyRef :
+                  name : pg-secrets
+                  key :  db_username
+
+            - name: SPRING_DATASOURCE_PASSWORD 
+              valueFrom :
+                secretKeyRef :
+                  name : pg-secrets
+                  key :  db_password
+
+---
+
+apiVersion: v1 
+kind: Service 
+metadata: 
+  name: taskmanager-k8s-svc
+spec:
+  selector:
+    app: taskmanager-k8s
+  ports:
+    - protocol: "TCP"
+      port: 8080 # The port that the service is running on in the cluster
+      targetPort: 8080 # The port exposed by the service
+  type: NodePort # type of the service.
