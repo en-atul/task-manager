@@ -1,0 +1,30 @@
+{{- if .Values.database.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "taskmanager-chart.fullname" . }}-db-ready-check
+  labels:
+    {{- include "taskmanager-chart.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "4"
+    "helm.sh/hook-delete-policy": hook-succeeded
+spec:
+  template:
+    metadata:
+      labels:
+        {{- include "taskmanager-chart.labels" . | nindent 8 }}
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: db-ready-check
+          image: postgres:{{ .Values.database.image.tag }}
+          command: ['sh', '-c', 
+            'until pg_isready -h {{ .Values.database.host | default (printf "%s-postgres" (include "taskmanager-chart.fullname" .)) }} -p 5432 -U {{ .Values.database.username }}; do echo waiting for database; sleep 2; done; echo "Database is ready!"']
+          env:
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "taskmanager-chart.fullname" . }}-pg-secrets
+                  key: db_password
+{{- end }} 

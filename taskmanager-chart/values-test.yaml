@@ -1,0 +1,65 @@
+# Test environment values
+# This environment uses an internal PostgreSQL database
+
+replicaCount: 2
+
+# Database configuration for test environment
+database:
+  enabled: true
+  image:
+    repository: postgres
+    tag: "latest"
+  name: "task-manager-test"
+  host: ""  # Will default to <release-name>-postgres
+  sslMode: "disable"
+  channelBinding: "disable"
+  username: "root"
+  password: "root"
+  persistence:
+    size: "1Gi"
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+
+# External database disabled for test
+externalDatabase:
+  enabled: false
+
+# App image configuration
+image:
+  repository: taskmanager-app
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+# Service configuration
+service:
+  type: NodePort
+  port: 8080
+
+# Resources for app
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+  requests:
+    cpu: 500m
+    memory: 512Mi
+
+# Health checks
+livenessProbe:
+  httpGet:
+    path: /actuator/health
+    port: http
+  initialDelaySeconds: 60
+  periodSeconds: 10
+
+readinessProbe:
+  httpGet:
+    path: /actuator/health
+    port: http
+  initialDelaySeconds: 30
+  periodSeconds: 5 
