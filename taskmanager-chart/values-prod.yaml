@@ -1,0 +1,57 @@
+# Production environment values
+# This environment uses an external database (configure your actual database URL)
+
+replicaCount: 3
+
+# Database configuration for production environment
+database:
+  enabled: false  # Disable internal database in production
+
+# External database configuration for production
+externalDatabase:
+  enabled: true
+  url: "jdbc:postgresql://your-production-db-host:5432/task-manager-prod"
+  username: "your-db-username"
+  password: "your-db-password"
+
+# App image configuration
+image:
+  repository: taskmanager-app
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+# Service configuration
+service:
+  type: LoadBalancer
+  port: 8080
+
+# Resources for app
+resources:
+  limits:
+    cpu: 2000m
+    memory: 2Gi
+  requests:
+    cpu: 1000m
+    memory: 1Gi
+
+# Health checks
+livenessProbe:
+  httpGet:
+    path: /actuator/health
+    port: http
+  initialDelaySeconds: 60
+  periodSeconds: 10
+
+readinessProbe:
+  httpGet:
+    path: /actuator/health
+    port: http
+  initialDelaySeconds: 30
+  periodSeconds: 5
+
+# Autoscaling for production
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70 

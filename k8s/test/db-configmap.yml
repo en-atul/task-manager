@@ -1,0 +1,9 @@
+apiVersion : v1
+kind : ConfigMap
+metadata:
+  name : db-config
+data:
+  db_name: task-manager
+  db_host : postgres
+  db_ssl_mode: disable
+  db_channel_binding: disable

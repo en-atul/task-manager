@@ -1,0 +1,126 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "taskmanager-chart.fullname" . }}-app
+  labels:
+    {{- include "taskmanager-chart.labels" . | nindent 4 }}
+  {{- if .Values.database.enabled }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "5"
+  {{- end }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "taskmanager-chart.selectorLabels" . | nindent 6 }}
+      app: taskmanager-app
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "taskmanager-chart.labels" . | nindent 8 }}
+        app: taskmanager-app
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "taskmanager-chart.serviceAccountName" . }}
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          {{- with .Values.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          {{- if .Values.database.enabled }}
+          env:
+            - name: DB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "taskmanager-chart.fullname" . }}-db-config
+                  key: db_host
+            - name: DB_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "taskmanager-chart.fullname" . }}-db-config
+                  key: db_name
+            - name: DB_SSL_MODE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "taskmanager-chart.fullname" . }}-db-config
+                  key: db_ssl_mode
+            - name: DB_CHANNEL_BINDING
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "taskmanager-chart.fullname" . }}-db-config
+                  key: db_channel_binding
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "taskmanager-chart.fullname" . }}-pg-secrets
+                  key: db_username
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "taskmanager-chart.fullname" . }}-pg-secrets
+                  key: db_password
+          {{- else if .Values.externalDatabase.enabled }}
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: {{ .Values.externalDatabase.url }}
+            - name: SPRING_DATASOURCE_USERNAME
+              value: {{ .Values.externalDatabase.username }}
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: {{ .Values.externalDatabase.password }}
+          {{- end }}
+          {{- with .Values.livenessProbe }}
+          livenessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.readinessProbe }}
+          readinessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.volumeMounts }}
+          volumeMounts:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+      {{- with .Values.volumes }}
+      volumes:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }} 
